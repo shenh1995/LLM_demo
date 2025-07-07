@@ -1,0 +1,39 @@
+# Web框架 - FastAPI和Uvicorn
+fastapi
+uvicorn[standard]
+
+#embedding相关的
+zhipuai
+
+# 数据处理和验证
+pydantic
+python-dotenv
+
+# AI/ML相关 - LangChain生态系统
+langchain
+langchain-openai
+langchain-huggingface
+langchain-community
+
+# HTTP客户端
+requests
+
+# 文件处理
+aiofiles
+python-multipart
+
+# 日志
+loguru
+
+# 时间处理
+python-dateutil
+
+# 异步支持
+asyncio-mqtt
+
+# 数据库支持（可选）
+sqlalchemy
+alembic
+
+# 缓存支持（可选）
+redis
