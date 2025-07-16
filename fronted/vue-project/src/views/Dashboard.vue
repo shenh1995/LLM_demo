@@ -6,6 +6,7 @@ const messages = ref([
 ])
 const inputValue = ref('')
 const hasUserInteracted = ref(false) // 添加用户交互状态
+const isWaiting = ref(false) // 添加等待状态
 
 function handleSend() {
   const text = inputValue.value.trim()
@@ -24,6 +25,15 @@ function handleSend() {
 // 发送消息到后端的函数
 async function sendMessageToBackend(message) {
   try {
+    // 设置等待状态
+    isWaiting.value = true
+    
+    // 创建一个AbortController用于超时控制
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+    }, 600000) // 10分钟超时 (600000毫秒)
+    
     const response = await fetch('http://localhost:8000/api/chat/stream', {
       method: 'POST',
       headers: {
@@ -32,21 +42,22 @@ async function sendMessageToBackend(message) {
       body: JSON.stringify({
         message: message,
         role: 'user'
-      })
+      }),
+      signal: controller.signal // 添加超时控制
     })
+    
+    // 清除超时定时器
+    clearTimeout(timeoutId)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    // 添加一个空的AI消息用于流式更新
-    const aiMessageIndex = messages.value.length
-    messages.value.push({ role: 'ai', text: '' })
-    
     // 获取响应流
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
+    let aiMessageIndex = -1 // 初始化为-1，表示还没有创建AI消息
     
     while (true) {
       const { done, value } = await reader.read()
@@ -61,13 +72,43 @@ async function sendMessageToBackend(message) {
           try {
             const data = JSON.parse(line.slice(6))
             
-            if (data.type === 'char') {
-              // 流式添加字符
-              messages.value[aiMessageIndex].text += data.content
-              scrollToBottom()
+            if (data.type === 'status') {
+              // 处理状态更新
+              console.log('状态更新:', data.content)
+              // 可以在这里更新UI状态，比如显示处理进度
             } else if (data.type === 'complete') {
-              // 流式完成
-              console.log('流式传输完成:', data.message)
+              // 处理完成，创建AI消息并更新内容
+              if (aiMessageIndex === -1) {
+                // 如果还没有创建AI消息，现在创建
+                aiMessageIndex = messages.value.length
+                messages.value.push({ role: 'ai', text: data.content })
+              } else {
+                // 如果已经有AI消息，更新内容
+                messages.value[aiMessageIndex].text = data.content
+              }
+              scrollToBottom()
+              // 清除等待状态
+              isWaiting.value = false
+            } else if (data.type === 'error') {
+              // 处理错误
+              console.error('处理错误:', data.content)
+              if (aiMessageIndex === -1) {
+                aiMessageIndex = messages.value.length
+                messages.value.push({ role: 'ai', text: data.content })
+              } else {
+                messages.value[aiMessageIndex].text = data.content
+              }
+              scrollToBottom()
+              // 清除等待状态
+              isWaiting.value = false
+            } else if (data.type === 'char') {
+              // 流式添加字符（兼容旧格式）
+              if (aiMessageIndex === -1) {
+                aiMessageIndex = messages.value.length
+                messages.value.push({ role: 'ai', text: data.content })
+              } else {
+                messages.value[aiMessageIndex].text += data.content
+              }
               scrollToBottom()
             }
           } catch (e) {
@@ -80,9 +121,15 @@ async function sendMessageToBackend(message) {
   } catch (error) {
     console.error('发送消息到后端失败:', error)
     // 如果发送失败，显示错误消息
-    messages.value.push({ role: 'ai', text: '抱歉，连接后端失败，请稍后重试。' })
+    let errorMessage = '抱歉，连接后端失败，请稍后重试。'
+    if (error.name === 'AbortError') {
+      errorMessage = '请求超时，请稍后重试。'
+    }
+    messages.value.push({ role: 'ai', text: errorMessage })
     isUserScrolling.value = false
     scrollToBottom()
+    // 清除等待状态
+    isWaiting.value = false
   }
 }
 
@@ -202,6 +249,18 @@ onMounted(() => {
           <div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
             <span>{{ msg.role === 'user' ? '我：' : 'AI：' }}</span>
             <div class="bubble">{{ msg.text }}</div>
+          </div>
+          <!-- 等待状态显示 -->
+          <div v-if="isWaiting" class="msg ai">
+            <span>AI：</span>
+            <div class="bubble waiting">
+              <div class="waiting-text">等待结果中...</div>
+              <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="footer-bar">
@@ -502,6 +561,52 @@ onMounted(() => {
     padding: 10px 18px;
     margin-right: 40px;
     box-shadow: 0 2px 8px #e0e7ef22;
+  }
+  
+  /* 等待状态样式 */
+  .msg.ai .bubble.waiting {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .waiting-text {
+    color: #6c757d;
+    font-size: 14px;
+  }
+  
+  .loading-dots {
+    display: flex;
+    gap: 4px;
+  }
+  
+  .loading-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6a7cf6;
+    animation: loading-dots 1.4s infinite ease-in-out;
+  }
+  
+  .loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  
+  .loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  
+  @keyframes loading-dots {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
   </style>
   

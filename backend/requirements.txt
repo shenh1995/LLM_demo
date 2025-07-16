@@ -37,3 +37,7 @@ alembic
 
 # 缓存支持（可选）
 redis
+
+# SQL解析和格式化
+sqlglot
+sqlparse

@@ -1,0 +1,10 @@
+graph TableRelations {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightblue];
+  "用户表" -- "订单表" [label="用户-订单\nid-user_id"];
+  "用户表" -- "供应商表" [label="产品-产品\nid-user_id"];
+  "订单表" -- "订单详情表" [label="订单-详情\nid-order_id"];
+  "订单详情表" -- "产品表" [label="产品-详情\nproduct_id-id"];
+  "产品表" -- "库存表" [label="产品-库存\nid-product_id"];
+  "产品表" -- "供应商表" [label="供应商-产品\nsupplier_id-id"];
+}

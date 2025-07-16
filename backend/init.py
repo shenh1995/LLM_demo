@@ -38,16 +38,12 @@ def init_models():
     print("🤖 正在初始化模型工厂...")
     
     try:
-        from models.Factory import ChatModelFactory, EmbeddingModelFactory
+        from models.factory import ChatModelFactory
         
         # 测试模型工厂是否正常工作
         print("   - 测试ChatModelFactory...")
         chat_model = ChatModelFactory.get_default_model()
         print(f"   ✅ ChatModelFactory初始化成功")
-        
-        print("   - 测试EmbeddingModelFactory...")
-        # embedding_model = EmbeddingModelFactory.get_default_model()
-        print(f"   ✅ EmbeddingModelFactory初始化成功")
         
         print("✅ 模型工厂初始化完成")
         
@@ -59,10 +55,36 @@ def init_database():
     """初始化数据库连接"""
     print("🗄️  正在初始化数据库连接...")
     
-    # 这里可以添加数据库初始化逻辑
-    # 例如：创建表、检查连接等
-    
-    print("✅ 数据库初始化完成")
+    try:
+        from database.mysql import MySQLConnector
+        
+        # 初始化全局MySQL连接
+        print("   - 初始化MySQL连接...")
+        mysql_connector = MySQLConnector.initialize_global_connection()
+        print(f"   ✅ MySQL连接初始化成功")
+        
+        # 测试连接是否正常工作
+        print("   - 测试数据库连接...")
+        test_result = mysql_connector.execute_sql_query("SELECT 1 as test")
+        if test_result != "[]":
+            print("   ✅ 数据库连接测试成功")
+        else:
+            print("   ⚠️  数据库连接测试返回空结果")
+        
+        # 测试utils模块中的数据库查询功能
+        print("   - 测试utils模块数据库查询...")
+        from utils.utils import execute_sql_query
+        utils_test_result = execute_sql_query("SELECT VERSION() as version")
+        if utils_test_result != "[]":
+            print("   ✅ utils模块数据库查询测试成功")
+        else:
+            print("   ⚠️  utils模块数据库查询测试返回空结果")
+        
+        print("✅ 数据库初始化完成")
+        
+    except Exception as e:
+        print(f"❌ 数据库初始化失败: {e}")
+        print("   这不会阻止API启动，但可能影响数据库相关功能")
 
 def init_cache():
     """初始化缓存系统"""
@@ -81,6 +103,10 @@ def main():
     try:
         # 初始化环境变量
         init_environment()
+        print()
+        
+        # 初始化数据库连接
+        init_database()
         print()
         
         # 初始化模型工厂

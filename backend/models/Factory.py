@@ -36,7 +36,7 @@ class ChatModelFactory:
                 openai_api_base="https://api.siliconflow.cn/v1",  # 平台 API 地址
                 **cls.model_params,
             )
-        elif model_name == "qianwen":
+        elif model_name in ["qianwen", "qwen"]:
             return ChatOpenAI(
                 api_key="sk-3d0b712661134d72991a4166262cbcea",
                 base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -44,8 +44,19 @@ class ChatModelFactory:
                 **cls.model_params,
                 # other params...
                 )
+        elif model_name == "zhipu":
+            return None  # 暂时返回 None，等待实现
+        else:
+            # 默认使用 qianwen
+            return ChatOpenAI(
+                api_key="sk-3d0b712661134d72991a4166262cbcea",
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+                model="qwen-plus",
+                **cls.model_params,
+            )
 
 
     @classmethod
     def get_default_model(cls):
         return cls.get_model("qianwen")
+

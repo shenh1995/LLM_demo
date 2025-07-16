@@ -40,17 +40,20 @@ def start_api_server():
     """启动API服务器"""
     print("\n🌐 启动API服务器...")
     print("   服务器将在 http://localhost:8000 启动")
+    print("   超时时间设置为10分钟")
     print("   按 Ctrl+C 停止服务器")
     print("-" * 50)
     
     try:
-        # 启动uvicorn服务器
+        # 启动uvicorn服务器，设置超时时间为10分钟（600秒）
         subprocess.run([
             sys.executable, "-m", "uvicorn", 
             "api:app", 
             "--reload", 
             "--host", "0.0.0.0", 
-            "--port", "8000"
+            "--port", "8000",
+            "--timeout-keep-alive", "600",  # 保持连接超时时间10分钟
+            "--timeout-graceful-shutdown", "600",  # 优雅关闭超时时间10分钟
         ], cwd=os.path.dirname(os.path.abspath(__file__)))
         
     except KeyboardInterrupt:

@@ -1,0 +1,86 @@
+{
+  "用户表": {
+    "订单表": [
+      {
+        "name": "用户-订单",
+        "columns": "id-user_id"
+      }
+    ],
+    "供应商表": [
+      {
+        "name": "产品-产品",
+        "columns": "id-user_id"
+      }
+    ]
+  },
+  "订单表": {
+    "用户表": [
+      {
+        "name": "用户-订单",
+        "columns": "user_id-id"
+      }
+    ],
+    "订单详情表": [
+      {
+        "name": "订单-详情",
+        "columns": "id-order_id"
+      }
+    ]
+  },
+  "订单详情表": {
+    "订单表": [
+      {
+        "name": "订单-详情",
+        "columns": "order_id-id"
+      }
+    ],
+    "产品表": [
+      {
+        "name": "产品-详情",
+        "columns": "product_id-id"
+      }
+    ]
+  },
+  "产品表": {
+    "订单详情表": [
+      {
+        "name": "产品-详情",
+        "columns": "id-product_id"
+      }
+    ],
+    "库存表": [
+      {
+        "name": "产品-库存",
+        "columns": "id-product_id"
+      }
+    ],
+    "供应商表": [
+      {
+        "name": "供应商-产品",
+        "columns": "supplier_id-id"
+      }
+    ]
+  },
+  "库存表": {
+    "产品表": [
+      {
+        "name": "产品-库存",
+        "columns": "product_id-id"
+      }
+    ]
+  },
+  "供应商表": {
+    "产品表": [
+      {
+        "name": "供应商-产品",
+        "columns": "id-supplier_id"
+      }
+    ],
+    "用户表": [
+      {
+        "name": "产品-产品",
+        "columns": "user_id-id"
+      }
+    ]
+  }
+}
